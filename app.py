@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import base64
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
+from pinecone_document import initialize_vectorstore
+from langchain.chains import RetrievalQA
 
 
 # 環境変数の読み込み
@@ -54,16 +56,21 @@ def get_openai_response(text):
     #     return None
 # def get_openai_response_with_langchain(text):
     # ChatOpenAIのインスタンスを作成
+
+    vectorstore = initialize_vectorstore()
     chat_model = ChatOpenAI(api_key=OPENAI_API_KEY)
 
+    qa_chain = RetrievalQA.from_llm(llm=chat_model, retriever=vectorstore.as_retriever())
+
     # リクエストを送信し、応答を取得
-    text = [HumanMessage(content=text)]
-    response = chat_model(text)
-    # print(response.content)
+    # text = [HumanMessage(content=text)]
+    # response = chat_model(text)
+    response = qa_chain(text)
+    print(response['result'])
 
     # 応答が正常に取得できた場合はテキストを返す
     if response:
-        return response.content
+        return response['result']
     else:
         return None
 
